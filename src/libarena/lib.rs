@@ -41,14 +41,13 @@ use std::rc::Rc;
 use std::rt::global_heap;
 use std::intrinsics::{TyDesc, get_tydesc};
 use std::intrinsics;
-use std::slice;
 
 // The way arena uses arrays is really deeply awful. The arrays are
 // allocated, and have capacities reserved, but the fill for the array
 // will always stay at 0.
 #[deriving(Clone, Eq)]
 struct Chunk {
-    data: Rc<RefCell<~[u8]>>,
+    data: Rc<RefCell<Vec<u8> >>,
     fill: Cell<uint>,
     is_pod: Cell<bool>,
 }
@@ -110,7 +109,7 @@ impl Arena {
 
 fn chunk(size: uint, is_pod: bool) -> Chunk {
     Chunk {
-        data: Rc::new(RefCell::new(slice::with_capacity(size))),
+        data: Rc::new(RefCell::new(Vec::with_capacity(size))),
         fill: Cell::new(0u),
         is_pod: Cell::new(is_pod),
     }
@@ -488,6 +487,9 @@ impl<T> Drop for TypedArena<T> {
 #[cfg(test)]
 mod tests {
     extern crate test;
+
+    use std::vec_ng::Vec;
+
     use self::test::BenchHarness;
     use super::{Arena, TypedArena};
 
@@ -548,7 +550,7 @@ mod tests {
 
     struct Nonpod {
         string: ~str,
-        array: ~[int],
+        array: Vec<int> ,
     }
 
     #[test]
@@ -557,7 +559,7 @@ mod tests {
         for _ in range(0, 100000) {
             arena.alloc(Nonpod {
                 string: ~"hello world",
-                array: ~[ 1, 2, 3, 4, 5 ],
+                array: vec!( 1, 2, 3, 4, 5 ),
             });
         }
     }
@@ -568,7 +570,7 @@ mod tests {
         bh.iter(|| {
             arena.alloc(Nonpod {
                 string: ~"hello world",
-                array: ~[ 1, 2, 3, 4, 5 ],
+                array: vec!( 1, 2, 3, 4, 5 ),
             })
         })
     }
@@ -578,7 +580,7 @@ mod tests {
         bh.iter(|| {
             ~Nonpod {
                 string: ~"hello world",
-                array: ~[ 1, 2, 3, 4, 5 ],
+                array: vec!( 1, 2, 3, 4, 5 ),
             }
         })
     }
@@ -589,7 +591,7 @@ mod tests {
         bh.iter(|| {
             arena.alloc(|| Nonpod {
                 string: ~"hello world",
-                array: ~[ 1, 2, 3, 4, 5 ],
+                array: vec!( 1, 2, 3, 4, 5 ),
             })
         })
     }
